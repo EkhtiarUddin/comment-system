@@ -1,0 +1,17 @@
+#dependencies
+backend/node_modules/
+frontend/node_modules/
+backend/__pycache__/
+backend/.Python
+
+# Environment variables
+backend/.env
+frontend/.env
+
+# Build files
+/frontend/build/
+
+# Misc
+.DS_Store
+
+#vercel
