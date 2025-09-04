@@ -1,0 +1,49 @@
+@import 'variables'; // Import variables and mixins
+
+// Global styles
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f5f5f5;
+  color: #333;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  font-size: 18px;
+  color: $dark-gray;
+}
+
+.error-message {
+  background-color: lighten($danger-color, 40%);
+  color: darken($danger-color, 20%);
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  border-left: 4px solid $danger-color;
+}
+
+// Import component styles (these will import variables separately)
+@import 'Navbar';
+@import 'Auth';
+@import 'CommentsPage';
+@import 'CommentList';
+@import 'Comment';
+@import 'CommentForm';

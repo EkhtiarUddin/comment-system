@@ -1,0 +1,147 @@
+@import 'variables';
+.comment {
+  background-color: white;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); // Changed from @include box-shadow
+
+  .comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+
+    .comment-author {
+      font-weight: bold;
+      color: #2c3e50; // Changed from $secondary-color
+    }
+
+    .comment-date {
+      font-size: 0.85rem;
+      color: #7f8c8d; // Changed from $dark-gray
+    }
+  }
+
+  .comment-content {
+    margin-bottom: 15px;
+    line-height: 1.5;
+  }
+
+  .comment-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+
+    .comment-reactions {
+      display: flex;
+      gap: 8px;
+
+      .reaction-btn {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 10px;
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s;
+
+        &:hover:not(:disabled) {
+          background-color: #e9ecef;
+        }
+
+        &.active {
+          background-color: #e3f2fd;
+          border-color: $primary-color;
+          color: $primary-color;
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+      }
+    }
+
+    .reply-btn,
+    .edit-btn,
+    .delete-btn {
+      padding: 5px 10px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .reply-btn {
+      color: $primary-color;
+    }
+
+    .edit-btn {
+      color: $warning-color;
+    }
+
+    .delete-btn {
+      color: $danger-color;
+    }
+
+    .reply-btn:hover,
+    .edit-btn:hover,
+    .delete-btn:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .comment-edit,
+  .comment-reply {
+    margin-top: 15px;
+
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    .comment-edit-actions,
+    .comment-reply-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+
+      button:first-child {
+        @include button-style($primary-color);
+      }
+
+      button:last-child {
+        @include button-style($dark-gray);
+      }
+    }
+  }
+
+  .comment-replies {
+    margin-top: 15px;
+    margin-left: 30px;
+    border-left: 2px solid #eee;
+    padding-left: 15px;
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .comment {
+    .comment-actions {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .comment-replies {
+      margin-left: 15px;
+    }
+  }
+}
