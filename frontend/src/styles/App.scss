@@ -1,6 +1,5 @@
-@import 'variables'; // Import variables and mixins
+@import 'variables';
 
-// Global styles
 * {
   margin: 0;
   padding: 0;
@@ -40,7 +39,6 @@ body {
   border-left: 4px solid $danger-color;
 }
 
-// Import component styles (these will import variables separately)
 @import 'Navbar';
 @import 'Auth';
 @import 'CommentsPage';

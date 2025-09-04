@@ -4,7 +4,7 @@
   border-radius: 8px;
   padding: 15px;
   margin-bottom: 15px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); // Changed from @include box-shadow
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 
   .comment-header {
     display: flex;
@@ -14,12 +14,12 @@
 
     .comment-author {
       font-weight: bold;
-      color: #2c3e50; // Changed from $secondary-color
+      color: #2c3e50;
     }
 
     .comment-date {
       font-size: 0.85rem;
-      color: #7f8c8d; // Changed from $dark-gray
+      color: #7f8c8d;
     }
   }
 
@@ -131,7 +131,6 @@
   }
 }
 
-// Responsive design
 @media (max-width: 768px) {
   .comment {
     .comment-actions {

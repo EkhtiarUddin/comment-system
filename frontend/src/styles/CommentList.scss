@@ -5,10 +5,10 @@
   .no-comments {
     text-align: center;
     padding: 30px;
-    color: #7f8c8d; // Changed from $dark-gray to actual value
+    color: #7f8c8d;
     font-style: italic;
     background-color: white;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); // Changed from @include box-shadow
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   }
 }
