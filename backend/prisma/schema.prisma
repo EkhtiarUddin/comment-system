@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int               @id @default(autoincrement())
+  username  String            @unique
+  email     String            @unique
+  password  String
+  comments  Comment[]
+  reactions CommentReaction[]
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Comment {
+  id        Int               @id @default(autoincrement())
+  content   String
+  userId    Int               @map("user_id")
+  parentId  Int?              @map("parent_id")
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent    Comment?          @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[]         @relation("CommentReplies")
+  reactions CommentReaction[]
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+
+  @@map("comments")
+}
+
+model CommentReaction {
+  id           Int      @id @default(autoincrement())
+  commentId    Int      @map("comment_id")
+  userId       Int      @map("user_id")
+  reactionType String   @map("reaction_type") // like or dislike
+  comment      Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@unique([commentId, userId])
+  @@map("comment_reactions")
+}
+
