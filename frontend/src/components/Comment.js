@@ -64,7 +64,7 @@ const Comment = ({ comment, onUpdate, onDelete, onReply }) => {
     if (!isAuthenticated) return;
     
     try {
-      // If user already has this reaction, remove it
+      // If user already has this reaction
       if (userReaction === reactionType) {
         await api.delete(`/comments/${comment.id}/reaction`);
         setUserReaction(null);
@@ -75,7 +75,7 @@ const Comment = ({ comment, onUpdate, onDelete, onReply }) => {
           setDislikesCount(dislikesCount - 1);
         }
       } 
-      // If user has the opposite reaction, change it
+      // If user has the opposite reaction
       else if (userReaction && userReaction !== reactionType) {
         await api.post(`/comments/${comment.id}/reaction`, { reactionType });
         setUserReaction(reactionType);
@@ -88,7 +88,7 @@ const Comment = ({ comment, onUpdate, onDelete, onReply }) => {
           setDislikesCount(dislikesCount + 1);
         }
       }
-      // If user has no reaction, add it
+      // If user has no reaction
       else {
         await api.post(`/comments/${comment.id}/reaction`, { reactionType });
         setUserReaction(reactionType);
