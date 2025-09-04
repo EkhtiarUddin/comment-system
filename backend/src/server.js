@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-// Correct paths - they should point to files in the same src directory
 const authRoutes = require('./routes/auth');
 const commentRoutes = require('./routes/comments');
 
@@ -22,7 +21,7 @@ app.get('/api/test', (req, res) => {
 });
 
 // Error handling middleware
-app.use((err, req, res, next) => {
+app.use((err, res) => {
   console.error(err.stack);
   res.status(500).json({ message: 'Something went wrong!' });
 });
