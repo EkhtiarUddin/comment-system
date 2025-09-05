@@ -10,7 +10,7 @@ const CommentController = {
       const skip = (page - 1) * limit;
 
       let orderBy = {};
-      switch(sort) {
+      switch (sort) {
         case 'most_liked':
           orderBy = { reactions: { _count: 'desc' } };
           break;
@@ -39,7 +39,16 @@ const CommentController = {
                 user: {
                   select: { username: true }
                 },
-                reactions: true
+                reactions: true,
+                replies: {
+                  include: {
+                    user: {
+                      select: { username: true }
+                    },
+                    reactions: true
+                  },
+                  orderBy: { createdAt: 'asc' }
+                }
               },
               orderBy: { createdAt: 'asc' }
             },
@@ -54,17 +63,19 @@ const CommentController = {
         prisma.comment.count({ where })
       ]);
 
-      // Calculate likes and dislikes for each comment
-      const commentsWithReactions = comments.map(comment => {
+      const calculateReactions = (comment) => {
         const likes = comment.reactions.filter(r => r.reactionType === 'like').length;
         const dislikes = comment.reactions.filter(r => r.reactionType === 'dislike').length;
-        
+
         return {
           ...comment,
           likes,
-          dislikes
+          dislikes,
+          replies: comment.replies ? comment.replies.map(calculateReactions) : []
         };
-      });
+      };
+
+      const commentsWithReactions = comments.map(calculateReactions);
 
       res.json({
         comments: commentsWithReactions,
@@ -79,11 +90,11 @@ const CommentController = {
   async createComment(req, res) {
     try {
       const { content, parent_id } = req.body;
-      
+
       if (!content) {
         return res.status(400).json({ message: 'Comment content is required' });
       }
-      
+
       const comment = await prisma.comment.create({
         data: {
           content,
@@ -103,24 +114,22 @@ const CommentController = {
           }
         }
       });
-      
-      // Calculate likes and dislikes
+
       const likes = comment.reactions.filter(r => r.reactionType === 'like').length;
       const dislikes = comment.reactions.filter(r => r.reactionType === 'dislike').length;
-      
+
       const commentWithCounts = {
         ...comment,
         likes,
         dislikes
       };
 
-      // Broadcast new comment to all connected clients
       broadcastMessage({
         type: 'comment_added',
         comment: commentWithCounts,
         timestamp: new Date().toISOString()
       });
-      
+
       res.status(201).json(commentWithCounts);
     } catch (error) {
       res.status(500).json({ message: 'Error creating comment', error: error.message });
@@ -131,20 +140,19 @@ const CommentController = {
     try {
       const commentId = parseInt(req.params.id);
       const { content } = req.body;
-      
-      // Verify user owns the comment
+
       const existingComment = await prisma.comment.findUnique({
         where: { id: commentId }
       });
-      
+
       if (!existingComment) {
         return res.status(404).json({ message: 'Comment not found' });
       }
-      
+
       if (existingComment.userId !== req.user.id) {
         return res.status(403).json({ message: 'Not authorized to update this comment' });
       }
-      
+
       const updatedComment = await prisma.comment.update({
         where: { id: commentId },
         data: { content },
@@ -161,23 +169,22 @@ const CommentController = {
           }
         }
       });
-      
+
       const likes = updatedComment.reactions.filter(r => r.reactionType === 'like').length;
       const dislikes = updatedComment.reactions.filter(r => r.reactionType === 'dislike').length;
-      
+
       const updatedCommentWithCounts = {
         ...updatedComment,
         likes,
         dislikes
       };
 
-      // Broadcast updated comment
       broadcastMessage({
         type: 'comment_updated',
         comment: updatedCommentWithCounts,
         timestamp: new Date().toISOString()
       });
-      
+
       res.json(updatedCommentWithCounts);
     } catch (error) {
       res.status(500).json({ message: 'Error updating comment', error: error.message });
@@ -187,31 +194,29 @@ const CommentController = {
   async deleteComment(req, res) {
     try {
       const commentId = parseInt(req.params.id);
-      
-      // Verify user owns the comment
+
       const existingComment = await prisma.comment.findUnique({
         where: { id: commentId }
       });
-      
+
       if (!existingComment) {
         return res.status(404).json({ message: 'Comment not found' });
       }
-      
+
       if (existingComment.userId !== req.user.id) {
         return res.status(403).json({ message: 'Not authorized to delete this comment' });
       }
-      
+
       await prisma.comment.delete({
         where: { id: commentId }
       });
-      
-      // Broadcast deleted comment ID
+
       broadcastMessage({
         type: 'comment_deleted',
         commentId: commentId,
         timestamp: new Date().toISOString()
       });
-      
+
       res.json({ message: 'Comment deleted successfully' });
     } catch (error) {
       res.status(500).json({ message: 'Error deleting comment', error: error.message });
@@ -223,12 +228,11 @@ const CommentController = {
       const commentId = parseInt(req.params.id);
       const userId = req.user.id;
       const { reactionType } = req.body;
-      
+
       if (!['like', 'dislike'].includes(reactionType)) {
         return res.status(400).json({ message: 'Invalid reaction type' });
       }
-      
-      // Check if reaction already exists
+
       const existingReaction = await prisma.commentReaction.findUnique({
         where: {
           commentId_userId: {
@@ -237,10 +241,9 @@ const CommentController = {
           }
         }
       });
-      
+
       let reaction;
       if (existingReaction) {
-        // Update existing reaction
         reaction = await prisma.commentReaction.update({
           where: {
             commentId_userId: {
@@ -251,7 +254,6 @@ const CommentController = {
           data: { reactionType }
         });
       } else {
-        // Create new reaction
         reaction = await prisma.commentReaction.create({
           data: {
             commentId,
@@ -260,19 +262,15 @@ const CommentController = {
           }
         });
       }
-      
-      // Get updated counts
       const comment = await prisma.comment.findUnique({
         where: { id: commentId },
         include: {
           reactions: true
         }
       });
-      
+
       const likes = comment.reactions.filter(r => r.reactionType === 'like').length;
       const dislikes = comment.reactions.filter(r => r.reactionType === 'dislike').length;
-      
-      // Broadcast reaction update
       broadcastMessage({
         type: 'reaction_updated',
         commentId: commentId,
@@ -281,7 +279,7 @@ const CommentController = {
         userReaction: reactionType,
         timestamp: new Date().toISOString()
       });
-      
+
       res.json({
         message: 'Reaction added successfully',
         reaction,
@@ -297,7 +295,7 @@ const CommentController = {
     try {
       const commentId = parseInt(req.params.id);
       const userId = req.user.id;
-      
+
       await prisma.commentReaction.delete({
         where: {
           commentId_userId: {
@@ -306,19 +304,17 @@ const CommentController = {
           }
         }
       });
-      
-      // Get updated counts
+
       const comment = await prisma.comment.findUnique({
         where: { id: commentId },
         include: {
           reactions: true
         }
       });
-      
+
       const likes = comment.reactions.filter(r => r.reactionType === 'like').length;
       const dislikes = comment.reactions.filter(r => r.reactionType === 'dislike').length;
-      
-      // Broadcast reaction update
+
       broadcastMessage({
         type: 'reaction_updated',
         commentId: commentId,
@@ -327,7 +323,7 @@ const CommentController = {
         userReaction: null,
         timestamp: new Date().toISOString()
       });
-      
+
       res.json({
         message: 'Reaction removed successfully',
         likes,
@@ -342,7 +338,7 @@ const CommentController = {
     try {
       const commentId = parseInt(req.params.id);
       const userId = req.user.id;
-      
+
       const reaction = await prisma.commentReaction.findUnique({
         where: {
           commentId_userId: {
@@ -351,7 +347,7 @@ const CommentController = {
           }
         }
       });
-      
+
       res.json({
         reactionType: reaction ? reaction.reactionType : null
       });
