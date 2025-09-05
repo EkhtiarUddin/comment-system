@@ -51,63 +51,63 @@ git clone <https://github.com/EkhtiarUddin/comment-system.git>
 cd comment-system
 ## Backend Setup
 
-1. Navigate to backend directory
+**Navigate to backend directory**
 cd backend
 
-2. Install dependencies
+**Install dependencies**
 npm install or yarn install
 
-4. Set up environment variables
+**Set up environment variables**
 cp .env.example .env (rename .env.example to .env)
 
-5. Update .env
+**Update .env**
 
-5. .env file
+**.env file**
 DATABASE_URL="postgresql://username:password@localhost:5432/comment_system"
 JWT_SECRET="your_super_secret_jwt_key_here_make_it_long_and_random"
 PORT=5000
 
-6. Generate a JWT Secret:
-Using Node.js
+**Generate a JWT Secret:**
+1. Using Node.js
 node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 
-Using OpenSSL
+2. Using OpenSSL
 openssl rand -base64 64
 
 ## Database Setup
 
-1. Create PostgreSQL database (via psql or pgAdmin)
+**Create PostgreSQL database (via psql or pgAdmin)**
 createdb comment_system (use pgadmin)
 
-2. Generate Prisma client
+**Generate Prisma client**
 npx prisma generate or yarn prisma generate
 
-3. Run database migrations
+**Run database migrations**
 npx prisma db push or yarn prisma db push
 
-4. Seed the database with sample data
+**Seed the database with sample data**
 npm run seed
 
 ## Frontend Setup
 
-1. Navigate to frontend directory
+**Navigate to frontend directory**
 cd ../frontend
 
-2. Install dependencies
+**Install dependencies**
 npm install or yarn install
 
-3. Set up environment variables
+**Set up environment variables**
 cp .env.example .env
 
-5. update the .env file:
+**update the .env file:**
 .env
 REACT_APP_API_URL=http://localhost:5000/api
 
 ## Running the Application
 
-### Development Mode
+#### Development Mode
 
-- **Terminal 1 - Backend:**
+**Terminal 1 - Backend:**
 cd backend
 npm run dev
 Backend will run on http://localhost:5000
@@ -117,12 +117,12 @@ cd frontend
 npm start
 Frontend will run on http://localhost:3000
 
-Production Mode
+#### Production Mode
 
-Build the frontend:
+**Build the frontend:**
 cd frontend
 npm run build
 
-Start production server:
+**Start production server:**
 cd backend
 npm start
