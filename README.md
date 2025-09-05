@@ -47,8 +47,8 @@ Features include **user authentication, comment CRUD operations, reactions (like
 
 ### Clone the Repository
 
-git clone <https://github.com/EkhtiarUddin/comment-system.git>
-cd comment-system
+**git clone <https://github.com/EkhtiarUddin/comment-system.git>**
+**cd comment-system**
 ## Backend Setup
 
 **Navigate to backend directory**
@@ -60,9 +60,8 @@ npm install or yarn install
 **Set up environment variables**
 cp .env.example .env (rename .env.example to .env)
 
-**Update .env**
+**Create & Update .env**
 
-**.env file**
 DATABASE_URL="postgresql://username:password@localhost:5432/comment_system"
 JWT_SECRET="your_super_secret_jwt_key_here_make_it_long_and_random"
 PORT=5000
