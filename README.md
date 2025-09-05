@@ -62,7 +62,7 @@ git clone <https://github.com/EkhtiarUddin/comment-system.git>
 cd comment-system
 2. Backend Setup
 
-# Navigate to backend directory
+## Navigate to backend directory
 cd backend
 
 # Install dependencies
