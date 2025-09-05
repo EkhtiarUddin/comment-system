@@ -31,7 +31,7 @@ Features include **user authentication, comment CRUD operations, reactions (like
 - Express.js  
 - PostgreSQL with Prisma ORM  
 - JWT authentication  
-- WebSocket (real-time updates)  
+- WebSocket [real-time updates] (tried but had some build errors, so removed from backend)
 - bcryptjs (password hashing)  
 
 ---
@@ -116,12 +116,3 @@ Features include **user authentication, comment CRUD operations, reactions (like
 - npm start
 - Frontend will run on http://localhost:3000
 
-#### Production Mode
-
-**Build the frontend:**
-- cd frontend
-- npm run build
-
-**Start production server:**
-- cd backend
-- npm start
