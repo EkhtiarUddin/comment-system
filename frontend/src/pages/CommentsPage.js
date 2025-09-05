@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import CommentList from '../components/CommentList';
@@ -67,10 +67,7 @@ const CommentsPage = () => {
         }
         
         if (comment.replies && comment.replies.length > 0) {
-          return {
-            ...comment,
-            replies: removeCommentFromTree(comment.replies)
-          };
+          comment.replies = removeCommentFromTree(comment.replies);
         }
         
         return true;

@@ -17,7 +17,6 @@ const CommentList = ({ comments, onUpdate, onDelete, onReplyAdded }) => {
           onDelete={onDelete}
           onReplyAdded={onReplyAdded}
           depth={0}
-          isReply={false}
         />
       ))}
     </div>

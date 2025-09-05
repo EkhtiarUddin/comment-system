@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import '../styles/Comment.scss';
 
-const Comment = ({ comment, onUpdate, onDelete, onReplyAdded, depth = 0, isReply = false }) => {
+const Comment = ({ comment, onUpdate, onDelete, onReplyAdded, isReply = false, depth = 0 }) => {
   const { isAuthenticated, currentUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(comment.content);
@@ -13,8 +13,6 @@ const Comment = ({ comment, onUpdate, onDelete, onReplyAdded, depth = 0, isReply
   const [likesCount, setLikesCount] = useState(comment.likes || 0);
   const [dislikesCount, setDislikesCount] = useState(comment.dislikes || 0);
   const [replies, setReplies] = useState(comment.replies || []);
-
-  // Maximum nesting depth to prevent infinite recursion
   const maxDepth = 5;
   const canReply = depth < maxDepth;
 
@@ -34,7 +32,6 @@ const Comment = ({ comment, onUpdate, onDelete, onReplyAdded, depth = 0, isReply
   }, [comment.id, isAuthenticated]);
 
   useEffect(() => {
-    // Update replies when prop changes
     setReplies(comment.replies || []);
   }, [comment.replies]);
 
@@ -68,8 +65,7 @@ const Comment = ({ comment, onUpdate, onDelete, onReplyAdded, depth = 0, isReply
       
       setReplyContent('');
       setIsReplying(false);
-      
-      // Notify parent component that a reply was added
+
       if (onReplyAdded) {
         onReplyAdded();
       }
@@ -82,7 +78,6 @@ const Comment = ({ comment, onUpdate, onDelete, onReplyAdded, depth = 0, isReply
     if (!isAuthenticated) return;
     
     try {
-      // If user already has this reaction, remove it
       if (userReaction === reactionType) {
         await api.delete(`/comments/${comment.id}/reaction`);
         setUserReaction(null);
@@ -93,7 +88,6 @@ const Comment = ({ comment, onUpdate, onDelete, onReplyAdded, depth = 0, isReply
           setDislikesCount(dislikesCount - 1);
         }
       } 
-      // If user has the opposite reaction, change it
       else if (userReaction && userReaction !== reactionType) {
         await api.post(`/comments/${comment.id}/reaction`, { reactionType });
         setUserReaction(reactionType);
@@ -106,7 +100,6 @@ const Comment = ({ comment, onUpdate, onDelete, onReplyAdded, depth = 0, isReply
           setDislikesCount(dislikesCount + 1);
         }
       }
-      // If user has no reaction, add it
       else {
         await api.post(`/comments/${comment.id}/reaction`, { reactionType });
         setUserReaction(reactionType);
@@ -125,7 +118,7 @@ const Comment = ({ comment, onUpdate, onDelete, onReplyAdded, depth = 0, isReply
   const isOwner = currentUser && currentUser.id === comment.userId;
 
   return (
-    <div className={`comment ${isReply ? 'comment-reply' : ''} depth-${depth}`}>
+    <div className={`comment ${isReply ? 'comment-reply' : ''}`}>
       <div className="comment-header">
         <span className="comment-author">{comment.user?.username}</span>
         <span className="comment-date">
@@ -209,7 +202,6 @@ const Comment = ({ comment, onUpdate, onDelete, onReplyAdded, depth = 0, isReply
         </div>
       )}
       
-      {/* Recursively render nested replies */}
       {replies && replies.length > 0 && (
         <div className="comment-replies">
           {replies.map(reply => (
@@ -219,8 +211,8 @@ const Comment = ({ comment, onUpdate, onDelete, onReplyAdded, depth = 0, isReply
               onUpdate={onUpdate}
               onDelete={onDelete}
               onReplyAdded={onReplyAdded}
-              depth={depth + 1}
               isReply={true}
+              depth={depth + 1}
             />
           ))}
         </div>
