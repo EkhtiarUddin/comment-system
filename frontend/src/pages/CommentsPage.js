@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import CommentList from '../components/CommentList';
@@ -12,8 +12,8 @@ const CommentsPage = () => {
   const [sortBy, setSortBy] = useState('newest');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const { isAuthenticated } = useAuth();
 
-  // Use useCallback to memoize the function
   const fetchComments = useCallback(async (page = 1, sort = sortBy) => {
     try {
       setIsLoading(true);
@@ -39,19 +39,49 @@ const CommentsPage = () => {
   };
 
   const handleCommentUpdated = (commentId, newContent) => {
-    setComments(prevComments =>
-      prevComments.map(comment =>
-        comment.id === commentId
-          ? { ...comment, content: newContent }
-          : comment
-      )
-    );
+    const updateCommentInTree = (comments) => {
+      return comments.map(comment => {
+        if (comment.id === commentId) {
+          return { ...comment, content: newContent };
+        }
+        
+        if (comment.replies && comment.replies.length > 0) {
+          return {
+            ...comment,
+            replies: updateCommentInTree(comment.replies)
+          };
+        }
+        
+        return comment;
+      });
+    };
+    
+    setComments(prevComments => updateCommentInTree(prevComments));
   };
 
   const handleCommentDeleted = (commentId) => {
-    setComments(prevComments =>
-      prevComments.filter(comment => comment.id !== commentId)
-    );
+    const removeCommentFromTree = (comments) => {
+      return comments.filter(comment => {
+        if (comment.id === commentId) {
+          return false;
+        }
+        
+        if (comment.replies && comment.replies.length > 0) {
+          return {
+            ...comment,
+            replies: removeCommentFromTree(comment.replies)
+          };
+        }
+        
+        return true;
+      });
+    };
+    
+    setComments(prevComments => removeCommentFromTree(prevComments));
+  };
+
+  const handleReplyAdded = () => {
+    fetchComments(currentPage, sortBy);
   };
 
   const handlePageChange = (newPage) => {
@@ -76,8 +106,8 @@ const CommentsPage = () => {
         <div className="comments-controls">
           <div className="sort-options">
             <span>Sort by: </span>
-            <select 
-              value={sortBy} 
+            <select
+              value={sortBy}
               onChange={(e) => handleSortChange(e.target.value)}
             >
               <option value="newest">Newest</option>
@@ -90,13 +120,15 @@ const CommentsPage = () => {
 
       {error && <div className="error-message">{error}</div>}
 
-      <CommentForm onCommentAdded={handleCommentAdded} />
-      
+      {isAuthenticated && (
+        <CommentForm onCommentAdded={handleCommentAdded} />
+      )}
+
       <CommentList
         comments={comments}
         onUpdate={handleCommentUpdated}
         onDelete={handleCommentDeleted}
-        onReply={handleCommentAdded}
+        onReplyAdded={handleReplyAdded}
       />
 
       {totalPages > 1 && (
@@ -107,9 +139,9 @@ const CommentsPage = () => {
           >
             Previous
           </button>
-          
+
           <span>Page {currentPage} of {totalPages}</span>
-          
+
           <button
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}

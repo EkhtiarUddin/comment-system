@@ -2,7 +2,7 @@ import React from 'react';
 import Comment from './Comment';
 import '../styles/CommentList.scss';
 
-const CommentList = ({ comments, onUpdate, onDelete, onReply }) => {
+const CommentList = ({ comments, onUpdate, onDelete, onReplyAdded }) => {
   if (!comments || comments.length === 0) {
     return <div className="no-comments">No comments yet. Be the first to comment!</div>;
   }
@@ -15,7 +15,9 @@ const CommentList = ({ comments, onUpdate, onDelete, onReply }) => {
           comment={comment}
           onUpdate={onUpdate}
           onDelete={onDelete}
-          onReply={onReply}
+          onReplyAdded={onReplyAdded}
+          depth={0}
+          isReply={false}
         />
       ))}
     </div>

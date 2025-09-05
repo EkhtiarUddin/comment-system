@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import '../styles/Comment.scss';
 
-const Comment = ({ comment, onUpdate, onDelete, onReply }) => {
+const Comment = ({ comment, onUpdate, onDelete, onReplyAdded, depth = 0, isReply = false }) => {
   const { isAuthenticated, currentUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(comment.content);
@@ -12,6 +12,11 @@ const Comment = ({ comment, onUpdate, onDelete, onReply }) => {
   const [userReaction, setUserReaction] = useState(null);
   const [likesCount, setLikesCount] = useState(comment.likes || 0);
   const [dislikesCount, setDislikesCount] = useState(comment.dislikes || 0);
+  const [replies, setReplies] = useState(comment.replies || []);
+
+  // Maximum nesting depth to prevent infinite recursion
+  const maxDepth = 5;
+  const canReply = depth < maxDepth;
 
   useEffect(() => {
     const fetchUserReaction = async () => {
@@ -27,6 +32,11 @@ const Comment = ({ comment, onUpdate, onDelete, onReply }) => {
     
     fetchUserReaction();
   }, [comment.id, isAuthenticated]);
+
+  useEffect(() => {
+    // Update replies when prop changes
+    setReplies(comment.replies || []);
+  }, [comment.replies]);
 
   const handleEdit = async () => {
     try {
@@ -51,10 +61,18 @@ const Comment = ({ comment, onUpdate, onDelete, onReply }) => {
 
   const handleReply = async () => {
     try {
-      await api.post('/comments', { content: replyContent, parent_id: comment.id });
+      await api.post('/comments', { 
+        content: replyContent, 
+        parent_id: comment.id 
+      });
+      
       setReplyContent('');
       setIsReplying(false);
-      onReply();
+      
+      // Notify parent component that a reply was added
+      if (onReplyAdded) {
+        onReplyAdded();
+      }
     } catch (error) {
       console.error('Error posting reply:', error);
     }
@@ -64,7 +82,7 @@ const Comment = ({ comment, onUpdate, onDelete, onReply }) => {
     if (!isAuthenticated) return;
     
     try {
-      // If user already has this reaction
+      // If user already has this reaction, remove it
       if (userReaction === reactionType) {
         await api.delete(`/comments/${comment.id}/reaction`);
         setUserReaction(null);
@@ -75,7 +93,7 @@ const Comment = ({ comment, onUpdate, onDelete, onReply }) => {
           setDislikesCount(dislikesCount - 1);
         }
       } 
-      // If user has the opposite reaction
+      // If user has the opposite reaction, change it
       else if (userReaction && userReaction !== reactionType) {
         await api.post(`/comments/${comment.id}/reaction`, { reactionType });
         setUserReaction(reactionType);
@@ -88,7 +106,7 @@ const Comment = ({ comment, onUpdate, onDelete, onReply }) => {
           setDislikesCount(dislikesCount + 1);
         }
       }
-      // If user has no reaction
+      // If user has no reaction, add it
       else {
         await api.post(`/comments/${comment.id}/reaction`, { reactionType });
         setUserReaction(reactionType);
@@ -107,11 +125,11 @@ const Comment = ({ comment, onUpdate, onDelete, onReply }) => {
   const isOwner = currentUser && currentUser.id === comment.userId;
 
   return (
-    <div className="comment">
+    <div className={`comment ${isReply ? 'comment-reply' : ''} depth-${depth}`}>
       <div className="comment-header">
-        <span className="comment-author">{comment.user.username}</span>
+        <span className="comment-author">{comment.user?.username}</span>
         <span className="comment-date">
-          {new Date(comment.createdAt).toLocaleString()}
+          {new Date(comment.createdAt || comment.created_at).toLocaleString()}
         </span>
       </div>
       
@@ -149,7 +167,7 @@ const Comment = ({ comment, onUpdate, onDelete, onReply }) => {
           </button>
         </div>
         
-        {isAuthenticated && (
+        {isAuthenticated && canReply && (
           <button 
             className="reply-btn"
             onClick={() => setIsReplying(!isReplying)}
@@ -177,7 +195,7 @@ const Comment = ({ comment, onUpdate, onDelete, onReply }) => {
       </div>
       
       {isReplying && (
-        <div className="comment-reply">
+        <div className="comment-reply-form">
           <textarea
             value={replyContent}
             onChange={(e) => setReplyContent(e.target.value)}
@@ -191,15 +209,18 @@ const Comment = ({ comment, onUpdate, onDelete, onReply }) => {
         </div>
       )}
       
-      {comment.replies && comment.replies.length > 0 && (
+      {/* Recursively render nested replies */}
+      {replies && replies.length > 0 && (
         <div className="comment-replies">
-          {comment.replies.map(reply => (
+          {replies.map(reply => (
             <Comment
               key={reply.id}
               comment={reply}
               onUpdate={onUpdate}
               onDelete={onDelete}
-              onReply={onReply}
+              onReplyAdded={onReplyAdded}
+              depth={depth + 1}
+              isReply={true}
             />
           ))}
         </div>
