@@ -1,4 +1,5 @@
 const prisma = require('../utils/prisma');
+const { broadcastMessage } = require('../websocket/server');
 
 const CommentController = {
   async getAllComments(req, res) {
@@ -14,7 +15,6 @@ const CommentController = {
           orderBy = { reactions: { _count: 'desc' } };
           break;
         case 'most_disliked':
-          // This requires a more complex query
           orderBy = { createdAt: 'desc' };
           break;
         default:
@@ -78,7 +78,7 @@ const CommentController = {
 
   async createComment(req, res) {
     try {
-      const { content, parentId } = req.body;
+      const { content, parent_id } = req.body;
       
       if (!content) {
         return res.status(400).json({ message: 'Comment content is required' });
@@ -88,21 +88,40 @@ const CommentController = {
         data: {
           content,
           userId: req.user.id,
-          parentId: parentId || null
+          parentId: parent_id || null
         },
         include: {
           user: {
             select: { username: true }
           },
-          reactions: true
+          reactions: true,
+          _count: {
+            select: {
+              reactions: true,
+              replies: true
+            }
+          }
         }
       });
       
-      res.status(201).json({
+      // Calculate likes and dislikes
+      const likes = comment.reactions.filter(r => r.reactionType === 'like').length;
+      const dislikes = comment.reactions.filter(r => r.reactionType === 'dislike').length;
+      
+      const commentWithCounts = {
         ...comment,
-        likes: 0,
-        dislikes: 0
+        likes,
+        dislikes
+      };
+
+      // Broadcast new comment to all connected clients
+      broadcastMessage({
+        type: 'comment_added',
+        comment: commentWithCounts,
+        timestamp: new Date().toISOString()
       });
+      
+      res.status(201).json(commentWithCounts);
     } catch (error) {
       res.status(500).json({ message: 'Error creating comment', error: error.message });
     }
@@ -133,18 +152,33 @@ const CommentController = {
           user: {
             select: { username: true }
           },
-          reactions: true
+          reactions: true,
+          _count: {
+            select: {
+              reactions: true,
+              replies: true
+            }
+          }
         }
       });
       
       const likes = updatedComment.reactions.filter(r => r.reactionType === 'like').length;
       const dislikes = updatedComment.reactions.filter(r => r.reactionType === 'dislike').length;
       
-      res.json({
+      const updatedCommentWithCounts = {
         ...updatedComment,
         likes,
         dislikes
+      };
+
+      // Broadcast updated comment
+      broadcastMessage({
+        type: 'comment_updated',
+        comment: updatedCommentWithCounts,
+        timestamp: new Date().toISOString()
       });
+      
+      res.json(updatedCommentWithCounts);
     } catch (error) {
       res.status(500).json({ message: 'Error updating comment', error: error.message });
     }
@@ -169,6 +203,13 @@ const CommentController = {
       
       await prisma.comment.delete({
         where: { id: commentId }
+      });
+      
+      // Broadcast deleted comment ID
+      broadcastMessage({
+        type: 'comment_deleted',
+        commentId: commentId,
+        timestamp: new Date().toISOString()
       });
       
       res.json({ message: 'Comment deleted successfully' });
@@ -231,6 +272,16 @@ const CommentController = {
       const likes = comment.reactions.filter(r => r.reactionType === 'like').length;
       const dislikes = comment.reactions.filter(r => r.reactionType === 'dislike').length;
       
+      // Broadcast reaction update
+      broadcastMessage({
+        type: 'reaction_updated',
+        commentId: commentId,
+        likes: likes,
+        dislikes: dislikes,
+        userReaction: reactionType,
+        timestamp: new Date().toISOString()
+      });
+      
       res.json({
         message: 'Reaction added successfully',
         reaction,
@@ -266,6 +317,16 @@ const CommentController = {
       
       const likes = comment.reactions.filter(r => r.reactionType === 'like').length;
       const dislikes = comment.reactions.filter(r => r.reactionType === 'dislike').length;
+      
+      // Broadcast reaction update
+      broadcastMessage({
+        type: 'reaction_updated',
+        commentId: commentId,
+        likes: likes,
+        dislikes: dislikes,
+        userReaction: null,
+        timestamp: new Date().toISOString()
+      });
       
       res.json({
         message: 'Reaction removed successfully',

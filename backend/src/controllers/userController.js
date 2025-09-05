@@ -6,8 +6,7 @@ const UserController = {
   async register(req, res) {
     try {
       const { username, email, password } = req.body;
-      
-      // Check if user already exists
+    
       const existingUser = await prisma.user.findFirst({
         where: {
           OR: [
@@ -23,8 +22,6 @@ const UserController = {
       
       // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
-      
-      // Create user
       const user = await prisma.user.create({
         data: {
           username,
@@ -50,6 +47,7 @@ const UserController = {
         }
       });
     } catch (error) {
+      console.error('Registration error:', error);
       res.status(500).json({ message: 'Error creating user', error: error.message });
     }
   },
@@ -57,8 +55,6 @@ const UserController = {
   async login(req, res) {
     try {
       const { email, password } = req.body;
-      
-      // Check if user exists
       const user = await prisma.user.findUnique({
         where: { email }
       });
@@ -66,8 +62,6 @@ const UserController = {
       if (!user) {
         return res.status(400).json({ message: 'Invalid credentials' });
       }
-      
-      // Check password
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
         return res.status(400).json({ message: 'Invalid credentials' });
@@ -90,6 +84,7 @@ const UserController = {
         }
       });
     } catch (error) {
+      console.error('Login error:', error);
       res.status(500).json({ message: 'Error logging in', error: error.message });
     }
   }
